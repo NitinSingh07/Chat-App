@@ -1,65 +1,103 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { useSyncUser } from "@/hooks/useSyncUser";
+import { ConversationList } from "@/components/chat/ConversationList";
+import { UserSearch } from "@/components/chat/UserSearch";
+import { ChatWindow } from "@/components/chat/ChatWindow";
+import { PresenceHandler } from "@/components/PresenceHandler";
+import { cn } from "@/lib/utils";
+import { MessageSquare } from "lucide-react";
 
 export default function Home() {
+  useSyncUser();
+  const [selectedConversationId, setSelectedConversationId] = useState<any>(null);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="flex h-full bg-background overflow-hidden relative">
+      <PresenceHandler />
+
+      {/* Top-right user avatar — always visible */}
+      <SignedIn>
+        <div className="fixed top-3 right-4 z-50">
+          <UserButton afterSignOutUrl="/" />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+      </SignedIn>
+
+      {/* Sidebar */}
+      <div
+        className={cn(
+          "w-full md:w-[300px] border-r border-border flex flex-col shrink-0 bg-card",
+          selectedConversationId ? "hidden md:flex" : "flex"
+        )}
+      >
+        {/* Sidebar Header */}
+        <div className="px-4 py-3.5 border-b border-border flex items-center gap-2.5 shrink-0">
+          <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center">
+            <MessageSquare className="h-4 w-4 text-primary" />
+          </div>
+          <h1 className="text-base font-bold tracking-tight">TARS Chat</h1>
+        </div>
+
+        {/* Search + Conversations */}
+        <SignedIn>
+          <UserSearch onSelect={(id) => setSelectedConversationId(id)} />
+          <div className="flex-1 overflow-hidden">
+            <ConversationList
+              selectedId={selectedConversationId}
+              onSelect={(id) => setSelectedConversationId(id)}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+          </div>
+        </SignedIn>
+
+        <SignedOut>
+          <div className="flex-1 flex flex-col items-center justify-center gap-5 p-8 text-center">
+            <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+              <MessageSquare className="h-7 w-7 text-primary" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm">Welcome to TARS Chat</p>
+              <p className="text-xs text-muted-foreground mt-1">Sign in to start messaging</p>
+            </div>
+            <div className="flex flex-col gap-2 w-full">
+              <SignInButton mode="modal">
+                <button className="w-full text-sm font-medium border border-border rounded-xl py-2 hover:bg-accent transition-colors">Sign In</button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <button className="w-full text-sm font-medium bg-primary text-primary-foreground rounded-xl py-2 hover:opacity-90 transition-opacity">Sign Up</button>
+              </SignUpButton>
+            </div>
+          </div>
+        </SignedOut>
+      </div>
+
+      {/* Main Chat Area */}
+      <div
+        className={cn(
+          "flex-1 min-w-0 transition-all",
+          !selectedConversationId ? "hidden md:flex" : "flex"
+        )}
+      >
+        {selectedConversationId ? (
+          <ChatWindow
+            conversationId={selectedConversationId}
+            onBack={() => setSelectedConversationId(null)}
+          />
+        ) : (
+          <div className="hidden md:flex flex-1 items-center justify-center flex-col gap-4 p-8 text-center">
+            <div className="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center">
+              <MessageSquare className="h-10 w-10 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-foreground">Select a conversation</h3>
+              <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+                Search for a user above or pick an existing conversation to start chatting.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </main>
   );
 }
