@@ -8,7 +8,9 @@ import { UserSearch } from "@/components/chat/UserSearch";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { PresenceHandler } from "@/components/PresenceHandler";
 import { cn } from "@/lib/utils";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Plus } from "lucide-react";
+import { CreateGroupDialog } from "@/components/chat/CreateGroupDialog";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   useSyncUser();
@@ -28,26 +30,40 @@ export default function Home() {
       {/* Sidebar */}
       <div
         className={cn(
-          "w-full md:w-[300px] border-r border-border flex flex-col shrink-0 bg-card",
+          "w-full md:w-[320px] border-r border-white/5 flex flex-col shrink-0 glass-sidebar relative",
           selectedConversationId ? "hidden md:flex" : "flex"
         )}
       >
         {/* Sidebar Header */}
-        <div className="px-4 py-3.5 border-b border-border flex items-center gap-2.5 shrink-0">
-          <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center">
-            <MessageSquare className="h-4 w-4 text-primary" />
+        <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between shrink-0 bg-white/5 backdrop-blur-xl">
+          <div className="flex items-center gap-3">
+            <UserButton afterSignOutUrl="/" />
+            <h1 className="text-lg font-bold tracking-tight text-white">TARS Chat</h1>
           </div>
-          <h1 className="text-base font-bold tracking-tight">TARS Chat</h1>
         </div>
 
         {/* Search + Conversations */}
         <SignedIn>
-          <UserSearch onSelect={(id) => setSelectedConversationId(id)} />
-          <div className="flex-1 overflow-hidden">
-            <ConversationList
-              selectedId={selectedConversationId}
-              onSelect={(id) => setSelectedConversationId(id)}
-            />
+          <div className="flex-1 flex flex-col min-h-0 relative">
+            <UserSearch onSelect={(id) => setSelectedConversationId(id)} />
+            <div className="flex-1 overflow-hidden">
+              <ConversationList
+                selectedId={selectedConversationId}
+                onSelect={(id) => setSelectedConversationId(id)}
+              />
+            </div>
+
+            {/* Create Group Floating Button */}
+            <div className="absolute bottom-8 right-8 z-30">
+              <CreateGroupDialog onSelect={(id) => setSelectedConversationId(id)}>
+                <Button
+                  size="icon"
+                  className="h-16 w-16 rounded-[2rem] bg-gradient-to-tr from-indigo-500 via-primary to-violet-500 shadow-[0_20px_50px_rgba(79,70,229,0.4)] hover:shadow-[0_25px_60px_rgba(79,70,229,0.5)] hover:scale-110 active:scale-95 transition-all duration-500 group border border-white/20"
+                >
+                  <Plus className="h-8 w-8 text-white transition-transform duration-500 group-hover:rotate-[360deg] stroke-[2.5px]" />
+                </Button>
+              </CreateGroupDialog>
+            </div>
           </div>
         </SignedIn>
 

@@ -6,9 +6,11 @@ import { api } from "../../../convex/_generated/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, ArrowLeft, ArrowDown, Circle, Trash2, Smile, AlertCircle, RefreshCw } from "lucide-react";
+import { Send, ArrowLeft, ArrowDown, Circle, Trash2, Smile, AlertCircle, RefreshCw, Users, MoreHorizontal } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
+import { GroupAvatar } from "./GroupAvatar";
+import { GroupSettingsDialog } from "./GroupSettingsDialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -127,7 +129,7 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
     }
 
     const isOnline = conversation.otherUser?.isOnline;
-    const firstName = conversation.otherUser?.name?.split(" ")[0] ?? "them";
+    const firstName = conversation.isGroup ? "the group" : (conversation.otherUser?.name?.split(" ")[0] ?? "them");
 
     return (
         <div className="flex h-full flex-col w-full">
@@ -146,29 +148,50 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
 
                 <div className="flex items-center gap-3.5 flex-1 min-w-0 py-1.5 px-2.5 rounded-2xl hover:bg-white/5 transition-all cursor-pointer group">
                     <div className="relative shrink-0">
-                        <Avatar className="h-11 w-11 border-2 border-white/10 shadow-xl group-hover:scale-105 transition-transform duration-300">
-                            <AvatarImage src={conversation.otherUser?.image} />
-                            <AvatarFallback className="text-sm font-bold bg-gradient-to-br from-primary to-primary/40 text-white">
-                                {conversation.otherUser?.name?.[0]?.toUpperCase()}
-                            </AvatarFallback>
-                        </Avatar>
-                        <span className={cn(
-                            "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#1a1c2e] shadow-lg transition-colors duration-500",
-                            isOnline ? "bg-emerald-500 ring-2 ring-emerald-500/20" : "bg-zinc-600"
-                        )} />
+                        {conversation.isGroup ? (
+                            <GroupAvatar participantIds={conversation.participants} size="md" />
+                        ) : (
+                            <>
+                                <Avatar className="h-11 w-11 border-2 border-white/10 shadow-xl group-hover:scale-105 transition-transform duration-300">
+                                    <AvatarImage src={conversation.otherUser?.image} />
+                                    <AvatarFallback className="text-sm font-bold bg-gradient-to-br from-primary to-primary/40 text-white">
+                                        {conversation.otherUser?.name?.[0]?.toUpperCase()}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <span className={cn(
+                                    "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#1a1c2e] shadow-lg transition-colors duration-500",
+                                    isOnline ? "bg-emerald-500 ring-2 ring-emerald-500/20" : "bg-zinc-600"
+                                )} />
+                            </>
+                        )}
                     </div>
                     <div className="flex flex-col min-w-0 gap-0.5">
-                        <h2 className="text-[16px] font-bold truncate leading-tight tracking-tight text-white group-hover:text-primary transition-colors">
-                            {conversation.otherUser?.name}
-                        </h2>
-                        <span className={cn(
-                            "text-[11px] font-bold leading-none tracking-wide flex items-center gap-1.5",
-                            isOnline ? "text-emerald-400" : "text-muted-foreground"
-                        )}>
-                            {isOnline && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />}
-                            {isOnline ? "ACTIVE NOW" : "OFFLINE"}
-                        </span>
+                        <div className="flex items-center gap-2 min-w-0">
+                            <h2 className="text-[16px] font-bold truncate leading-tight tracking-tight text-white group-hover:text-primary transition-colors">
+                                {conversation.isGroup ? conversation.name : conversation.otherUser?.name}
+                            </h2>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <span className={cn(
+                                "text-[11px] font-bold leading-none tracking-wide flex items-center gap-1.5",
+                                conversation.isGroup ? "text-primary" : (isOnline ? "text-emerald-400" : "text-muted-foreground")
+                            )}>
+                                {!conversation.isGroup && isOnline && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+                                {conversation.isGroup ? `${conversation.memberCount} MEMBERS` : (isOnline ? "ACTIVE NOW" : "OFFLINE")}
+                            </span>
+                        </div>
                     </div>
+                </div>
+
+                <div className="flex items-center gap-2 pr-3">
+                    {conversation.isGroup && (
+                        <GroupSettingsDialog
+                            conversationId={conversationId}
+                            currentName={conversation.name || ""}
+                            currentParticipants={conversation.participants}
+                            isAdmin={conversation.adminId === me?._id}
+                        />
+                    )}
                 </div>
             </div>
 
@@ -194,7 +217,7 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
                     {messages && messages.length > 0 && <div className="mt-auto" />}
 
                     {messages?.map((msg, idx) => {
-                        const isMe = msg.senderId !== conversation.otherUser?._id;
+                        const isMe = msg.senderId === me?._id;
                         const prevMsg = messages[idx - 1];
                         const showTimestamp = !prevMsg || msg.createdAt - prevMsg.createdAt > 300000;
                         const isNewGroup = !prevMsg || prevMsg.senderId !== msg.senderId;
@@ -244,6 +267,11 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
                                     )}
 
                                     <div className={cn("flex flex-col gap-1 items-end max-w-[85%] sm:max-w-[70%]")}>
+                                        {conversation.isGroup && !isMe && isNewGroup && !msg.isDeleted && (
+                                            <span className="text-[10px] font-bold text-primary ml-4 mb-0.5 uppercase tracking-wider">
+                                                {msg.senderName || "Unknown User"}
+                                            </span>
+                                        )}
                                         <div className={cn(
                                             "px-4 py-3 text-[14.5px] leading-relaxed shadow-xl transition-all relative overflow-hidden",
                                             isMe
@@ -330,7 +358,11 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
                                     <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:300ms]" />
                                 </div>
                                 <span className="text-xs text-muted-foreground font-medium">
-                                    {typing.length === 1 ? `${typing[0]} is typing...` : "People are typing..."}
+                                    {typing.length === 1
+                                        ? `${typing[0]} is typing...`
+                                        : typing.length === 2
+                                            ? `${typing[0]} and ${typing[1]} are typing...`
+                                            : `${typing[0]} and ${typing.length - 1} others are typing...`}
                                 </span>
                             </div>
                         </div>

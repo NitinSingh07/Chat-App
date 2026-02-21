@@ -7,7 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Users } from "lucide-react";
+import { GroupAvatar } from "./GroupAvatar";
 
 interface ConversationListProps {
     onSelect: (id: string) => void;
@@ -53,24 +54,38 @@ export function ConversationList({ onSelect, selectedId }: ConversationListProps
                         key={conv._id}
                         onClick={() => onSelect(conv._id)}
                         className={cn(
-                            "flex items-center gap-4 px-4 py-4 text-left transition-all w-full relative group mx-2 my-1 rounded-2xl",
-                            selectedId === conv._id ? "glass-card bg-primary/20" : "hover:bg-white/5"
+                            "flex items-center gap-4 px-4 py-5 text-left transition-all w-full relative group mx-2 my-1.5 rounded-[1.5rem] border border-transparent",
+                            selectedId === conv._id
+                                ? "glass-card bg-primary/25 border-primary/20 shadow-2xl shadow-primary/10 scale-[1.02]"
+                                : "hover:bg-white/5 hover:border-white/5"
                         )}
                     >
                         <div className="relative shrink-0">
-                            <Avatar className="h-12 w-12 border border-white/10 shadow-lg group-hover:scale-105 transition-transform">
-                                <AvatarImage src={conv.otherUser?.image} />
-                                <AvatarFallback className="text-sm font-bold bg-gradient-to-br from-primary/40 to-primary/10 text-white">
-                                    {conv.otherUser?.name?.[0]?.toUpperCase()}
-                                </AvatarFallback>
-                            </Avatar>
-                            {conv.otherUser?.isOnline && (
-                                <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-card bg-emerald-500" />
+                            {conv.isGroup ? (
+                                <GroupAvatar
+                                    participantIds={conv.participants}
+                                    size="md"
+                                    className="group-hover:scale-105 transition-transform"
+                                />
+                            ) : (
+                                <>
+                                    <Avatar className="h-12 w-12 border border-white/10 shadow-lg group-hover:scale-105 transition-transform">
+                                        <AvatarImage src={conv.otherUser?.image} />
+                                        <AvatarFallback className="text-sm font-bold bg-gradient-to-br from-primary/40 to-primary/10 text-white">
+                                            {conv.otherUser?.name?.[0]?.toUpperCase()}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    {conv.otherUser?.isOnline && (
+                                        <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-card bg-emerald-500" />
+                                    )}
+                                </>
                             )}
                         </div>
-                        <div className="flex-1 overflow-hidden">
-                            <div className="flex items-center justify-between gap-2">
-                                <span className="truncate text-[15px] font-semibold tracking-tight">{conv.otherUser?.name}</span>
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-3">
+                                <span className="truncate text-[15px] font-bold tracking-tight text-white group-hover:text-primary transition-colors">
+                                    {conv.isGroup ? conv.name : conv.otherUser?.name}
+                                </span>
                                 {conv.lastMessage && (
                                     <span className={cn(
                                         "text-[10px] whitespace-nowrap shrink-0",
@@ -80,7 +95,7 @@ export function ConversationList({ onSelect, selectedId }: ConversationListProps
                                     </span>
                                 )}
                             </div>
-                            <div className="flex items-center justify-between gap-2 mt-1">
+                            <div className="flex items-center justify-between gap-3 mt-1">
                                 <p className={cn(
                                     "truncate text-[13px] leading-tight flex-1",
                                     conv.unreadCount > 0 ? "text-foreground font-medium" : "text-muted-foreground"

@@ -42,10 +42,17 @@ export const list = query({
             .order("asc")
             .collect();
 
-        return messages.map(msg => ({
-            ...msg,
-            content: msg.isDeleted ? "This message was deleted" : msg.content,
-        }));
+        return await Promise.all(
+            messages.map(async (msg) => {
+                const user = await ctx.db.get(msg.senderId);
+                return {
+                    ...msg,
+                    content: msg.isDeleted ? "This message was deleted" : msg.content,
+                    senderName: user?.name,
+                    senderImage: user?.image,
+                };
+            })
+        );
     },
 });
 

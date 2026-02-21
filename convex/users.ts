@@ -67,6 +67,15 @@ export const listAll = query({
     },
 });
 
+export const getByIds = query({
+    args: { ids: v.array(v.id("users")) },
+    handler: async (ctx, args) => {
+        return await Promise.all(
+            args.ids.map(async (id) => await ctx.db.get(id))
+        );
+    },
+});
+
 export const setStatus = mutation({
     args: { isOnline: v.boolean() },
     handler: async (ctx, args) => {

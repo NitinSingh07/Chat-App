@@ -27,9 +27,9 @@ export function UserSearch({ onSelect }: { onSelect: (id: string) => void }) {
         <div className="px-4 py-3 shrink-0">
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start gap-3 text-muted-foreground/80 text-sm h-11 rounded-2xl bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10 shadow-lg transition-all group">
-                        <Search className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110" />
-                        <span className="truncate">Search messages or people...</span>
+                    <Button variant="outline" className="w-full justify-start gap-3 text-muted-foreground h-12 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 shadow-xl transition-all duration-300 group backdrop-blur-md">
+                        <Search className="h-4 w-4 shrink-0 transition-transform group-hover:scale-125 group-hover:text-primary" />
+                        <span className="truncate font-medium">Search messages or people...</span>
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden gap-0">
@@ -53,8 +53,8 @@ export function UserSearch({ onSelect }: { onSelect: (id: string) => void }) {
                         </div>
                     </div>
 
-                    <ScrollArea className="h-[280px]">
-                        <div className="p-2">
+                    <ScrollArea className="h-[320px]">
+                        <div className="p-2 space-y-1">
                             {!users || users === undefined ? (
                                 <div className="space-y-1 p-2">
                                     {[1, 2, 3].map(i => (
