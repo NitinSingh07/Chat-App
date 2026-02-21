@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Check, Settings, UserMinus, UserPlus, X, Edit2, Shield, User, Info, Users as UsersIcon } from "lucide-react";
+import { Check, Settings, UserMinus, UserPlus, X, Edit2, Shield, User, Info, Users as UsersIcon, LogOut } from "lucide-react";
 import { GroupAvatar } from "./GroupAvatar";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -29,6 +29,7 @@ export function GroupSettingsDialog({ conversationId, currentName, currentPartic
 
     const allUsers = useQuery(api.users.listAll, open ? { search } : "skip");
     const updateGroup = useMutation(api.conversations.updateGroup);
+    const leaveGroup = useMutation(api.conversations.leaveGroup);
     const me = useQuery(api.users.getMe);
 
     const isAdmin = me?._id === adminId;
@@ -67,6 +68,17 @@ export function GroupSettingsDialog({ conversationId, currentName, currentPartic
         }
     };
 
+    const handleLeaveGroup = async () => {
+        try {
+            await leaveGroup({ conversationId });
+            toast.success("You left the group");
+            setOpen(false);
+        } catch (error) {
+            toast.error("Failed to leave group");
+        }
+    };
+
+
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -75,6 +87,7 @@ export function GroupSettingsDialog({ conversationId, currentName, currentPartic
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden glass-card border-white/10 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.6)]">
+                <DialogTitle className="sr-only">Group Settings</DialogTitle>
                 {/* Hero Section */}
                 <div className="relative h-44 bg-gradient-to-br from-indigo-600/20 via-primary/10 to-violet-600/20 flex flex-col items-center justify-center border-b border-white/5 pb-6">
                     <div className="absolute top-4 right-4 text-white/20">
@@ -193,6 +206,19 @@ export function GroupSettingsDialog({ conversationId, currentName, currentPartic
                                             ))}
                                         </div>
                                     </ScrollArea>
+                                </div>
+                            )}
+
+                            {/* Leave Group Section */}
+                            {!isAdmin && (
+                                <div className="pt-2 border-t border-white/5 mt-4">
+                                    <button
+                                        onClick={handleLeaveGroup}
+                                        className="w-full flex items-center justify-center gap-2 p-3 rounded-2xl bg-destructive/10 text-destructive hover:bg-destructive/20 font-bold transition-all group"
+                                    >
+                                        <LogOut className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                                        Leave Group
+                                    </button>
                                 </div>
                             )}
                         </div>

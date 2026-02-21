@@ -27,6 +27,7 @@ export default defineSchema({
     createdAt: v.number(),
     isRead: v.boolean(),
     isDeleted: v.optional(v.boolean()),
+    isSystem: v.optional(v.boolean()),
     reactions: v.optional(v.array(v.object({ userId: v.id("users"), emoji: v.string() }))),
   }).index("by_conversation", ["conversationId"]),
 

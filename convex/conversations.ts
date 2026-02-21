@@ -79,13 +79,101 @@ export const updateGroup = mutation({
         if (conversation.adminId !== me._id) throw new Error("Only admin can update group");
 
         const patches: any = {};
-        if (args.name) patches.name = args.name;
+        if (args.name) {
+            patches.name = args.name;
+            if (conversation.name !== args.name) {
+                await ctx.db.insert("messages", {
+                    conversationId: args.conversationId,
+                    senderId: me._id,
+                    content: `${me.name} changed the group name to "${args.name}"`,
+                    createdAt: Date.now(),
+                    isRead: true,
+                    isSystem: true,
+                });
+            }
+        }
+
         if (args.participantIds) {
             // Ensure admin is always in participants
-            patches.participants = [...new Set([...args.participantIds, me._id])];
+            const newParticipants = [...new Set([...args.participantIds, me._id])];
+            patches.participants = newParticipants;
+
+            // Check for added/removed members to trigger system messages
+            const added = newParticipants.filter(id => !conversation.participants.includes(id));
+            const removed = conversation.participants.filter(id => !newParticipants.includes(id));
+
+            for (const id of added) {
+                const addedUser = await ctx.db.get(id);
+                if (addedUser) {
+                    await ctx.db.insert("messages", {
+                        conversationId: args.conversationId,
+                        senderId: me._id,
+                        content: `${me.name} added ${addedUser.name}`,
+                        createdAt: Date.now(),
+                        isRead: true,
+                        isSystem: true,
+                    });
+                }
+            }
+
+            for (const id of removed) {
+                const removedUser = await ctx.db.get(id);
+                if (removedUser) {
+                    await ctx.db.insert("messages", {
+                        conversationId: args.conversationId,
+                        senderId: me._id,
+                        content: `${me.name} removed ${removedUser.name}`,
+                        createdAt: Date.now(),
+                        isRead: true,
+                        isSystem: true,
+                    });
+                }
+            }
         }
 
         await ctx.db.patch(args.conversationId, patches);
+    },
+});
+
+export const leaveGroup = mutation({
+    args: {
+        conversationId: v.id("conversations"),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) throw new Error("Not authenticated");
+
+        const me = await ctx.db
+            .query("users")
+            .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+            .unique();
+
+        if (!me) throw new Error("User not found");
+
+        const conversation = await ctx.db.get(args.conversationId);
+        if (!conversation) throw new Error("Conversation not found");
+        if (!conversation.isGroup) throw new Error("Not a group conversation");
+
+        // Cannot leave if you are the admin (unless we handle admin transfer, but for now we block)
+        if (conversation.adminId === me._id) {
+            throw new Error("Admin cannot leave the group. Reassign admin first.");
+        }
+
+        const newParticipants = conversation.participants.filter(id => id !== me._id);
+
+        await ctx.db.patch(args.conversationId, {
+            participants: newParticipants
+        });
+
+        // Insert system message indicating departure
+        await ctx.db.insert("messages", {
+            conversationId: args.conversationId,
+            senderId: me._id,
+            content: `${me.name} left the group`,
+            createdAt: Date.now(),
+            isRead: true,
+            isSystem: true,
+        });
     },
 });
 

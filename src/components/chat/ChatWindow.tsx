@@ -232,88 +232,97 @@ export function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
                                         </span>
                                     </div>
                                 )}
-                                <div className={cn("flex group items-start gap-1.5 shadow-sm transition-all", isMe ? "justify-end" : "justify-start")}>
-                                    {isMe && !msg.isDeleted && (
-                                        <button
-                                            onClick={() => removeMessage({ messageId: msg._id })}
-                                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-muted-foreground hover:text-destructive mt-1"
-                                            title="Delete message"
-                                        >
-                                            <Trash2 className="h-3.5 w-3.5" />
-                                        </button>
-                                    )}
 
-                                    {/* Reaction Picker Trigger */}
-                                    {!msg.isDeleted && (
-                                        <div className={cn("mt-1", isMe ? "order-first mr-1" : "order-last ml-1")}>
-                                            <Popover>
-                                                <PopoverTrigger asChild>
-                                                    <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-muted-foreground hover:text-primary">
-                                                        <Smile className="h-4 w-4" />
-                                                    </button>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-fit p-1.5 flex gap-1 bg-card border-border" side="top">
-                                                    {["👍", "❤️", "😂", "😮", "😢"].map(emoji => (
-                                                        <button
-                                                            key={emoji}
-                                                            onClick={() => toggleReaction({ messageId: msg._id, emoji })}
-                                                            className="hover:bg-white/10 p-1.5 rounded-lg transition-colors text-lg"
-                                                        >
-                                                            {emoji}
-                                                        </button>
-                                                    ))}
-                                                </PopoverContent>
-                                            </Popover>
-                                        </div>
-                                    )}
-
-                                    <div className={cn("flex flex-col gap-1 items-end max-w-[85%] sm:max-w-[70%]")}>
-                                        {conversation.isGroup && !isMe && isNewGroup && !msg.isDeleted && (
-                                            <span className="text-[10px] font-bold text-primary ml-4 mb-0.5 uppercase tracking-wider">
-                                                {msg.senderName || "Unknown User"}
-                                            </span>
+                                {msg.isSystem ? (
+                                    <div className="flex justify-center my-2">
+                                        <span className="text-[11.5px] font-medium text-[#8696a0] bg-[#111b21] px-4 py-1.5 rounded-xl border border-[#202c33] shadow-sm text-center max-w-[85%]">
+                                            {msg.content}
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <div className={cn("flex group items-start gap-1.5 shadow-sm transition-all", isMe ? "justify-end" : "justify-start")}>
+                                        {isMe && !msg.isDeleted && (
+                                            <button
+                                                onClick={() => removeMessage({ messageId: msg._id })}
+                                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-muted-foreground hover:text-destructive mt-1"
+                                                title="Delete message"
+                                            >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                            </button>
                                         )}
-                                        <div className={cn(
-                                            "px-4 py-3 text-[14.5px] leading-relaxed shadow-xl transition-all relative overflow-hidden",
-                                            isMe
-                                                ? "bg-gradient-to-br from-indigo-600 to-violet-700 text-white rounded-[1.25rem] rounded-tr-[4px]"
-                                                : "glass-card bg-[#202c33]/40 text-foreground border-white/5 rounded-[1.25rem] rounded-tl-[4px]",
-                                            msg.isDeleted && "opacity-60 italic"
-                                        )}>
-                                            {isMe && <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />}
-                                            <span className="relative z-10">{msg.content}</span>
-                                        </div>
 
-                                        {/* Reactions Display */}
-                                        {msg.reactions && msg.reactions.length > 0 && (
-                                            <div className={cn("flex flex-wrap gap-1 mt-0.5", isMe ? "justify-end" : "justify-start")}>
-                                                {Object.entries(
-                                                    msg.reactions.reduce((acc: any, r) => {
-                                                        acc[r.emoji] = (acc[r.emoji] || 0) + 1;
-                                                        return acc;
-                                                    }, {})
-                                                ).map(([emoji, count]: [string, any]) => {
-                                                    const hasMyReaction = msg.reactions?.some(r => r.userId === me?._id && r.emoji === emoji);
-                                                    return (
-                                                        <button
-                                                            key={emoji}
-                                                            onClick={() => toggleReaction({ messageId: msg._id, emoji })}
-                                                            className={cn(
-                                                                "flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] border transition-colors",
-                                                                hasMyReaction
-                                                                    ? "bg-primary/20 border-primary/40 text-primary-foreground"
-                                                                    : "bg-white/5 border-white/10 text-muted-foreground hover:border-white/20"
-                                                            )}
-                                                        >
-                                                            <span>{emoji}</span>
-                                                            <span className="font-medium">{count}</span>
+                                        {/* Reaction Picker Trigger */}
+                                        {!msg.isDeleted && (
+                                            <div className={cn("mt-1", isMe ? "order-first mr-1" : "order-last ml-1")}>
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-muted-foreground hover:text-primary">
+                                                            <Smile className="h-4 w-4" />
                                                         </button>
-                                                    );
-                                                })}
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-fit p-1.5 flex gap-1 bg-card border-border" side="top">
+                                                        {["👍", "❤️", "😂", "😮", "😢"].map(emoji => (
+                                                            <button
+                                                                key={emoji}
+                                                                onClick={() => toggleReaction({ messageId: msg._id, emoji })}
+                                                                className="hover:bg-white/10 p-1.5 rounded-lg transition-colors text-lg"
+                                                            >
+                                                                {emoji}
+                                                            </button>
+                                                        ))}
+                                                    </PopoverContent>
+                                                </Popover>
                                             </div>
                                         )}
+
+                                        <div className={cn("flex flex-col gap-1 items-end max-w-[85%] sm:max-w-[70%]")}>
+                                            {conversation.isGroup && !isMe && isNewGroup && !msg.isDeleted && (
+                                                <span className="text-[10px] font-bold text-primary ml-4 mb-0.5 uppercase tracking-wider">
+                                                    {msg.senderName || "Unknown User"}
+                                                </span>
+                                            )}
+                                            <div className={cn(
+                                                "px-4 py-3 text-[14.5px] leading-relaxed shadow-xl transition-all relative overflow-hidden",
+                                                isMe
+                                                    ? "bg-gradient-to-br from-indigo-600 to-violet-700 text-white rounded-[1.25rem] rounded-tr-[4px]"
+                                                    : "glass-card bg-[#202c33]/40 text-foreground border-white/5 rounded-[1.25rem] rounded-tl-[4px]",
+                                                msg.isDeleted && "opacity-60 italic"
+                                            )}>
+                                                {isMe && <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />}
+                                                <span className="relative z-10">{msg.content}</span>
+                                            </div>
+
+                                            {/* Reactions Display */}
+                                            {msg.reactions && msg.reactions.length > 0 && (
+                                                <div className={cn("flex flex-wrap gap-1 mt-0.5", isMe ? "justify-end" : "justify-start")}>
+                                                    {Object.entries(
+                                                        msg.reactions.reduce((acc: any, r) => {
+                                                            acc[r.emoji] = (acc[r.emoji] || 0) + 1;
+                                                            return acc;
+                                                        }, {})
+                                                    ).map(([emoji, count]: [string, any]) => {
+                                                        const hasMyReaction = msg.reactions?.some(r => r.userId === me?._id && r.emoji === emoji);
+                                                        return (
+                                                            <button
+                                                                key={emoji}
+                                                                onClick={() => toggleReaction({ messageId: msg._id, emoji })}
+                                                                className={cn(
+                                                                    "flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] border transition-colors",
+                                                                    hasMyReaction
+                                                                        ? "bg-primary/20 border-primary/40 text-primary-foreground"
+                                                                        : "bg-white/5 border-white/10 text-muted-foreground hover:border-white/20"
+                                                                )}
+                                                            >
+                                                                <span>{emoji}</span>
+                                                                <span className="font-medium">{count}</span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         );
                     })}
